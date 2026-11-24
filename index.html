@@ -469,6 +469,14 @@ main{position:relative;z-index:2}
   </div>
 </section>
 
+<!-- Formulaire déclaré pour Netlify Forms (détecté au déploiement, jamais affiché).
+     Les noms de champs doivent correspondre à ceux envoyés par le script. -->
+<form name="fiche-renseignements" data-netlify="true" netlify-honeypot="bot-field" hidden>
+  <input type="text" name="sujet"><input type="text" name="clients"><input type="text" name="interlocuteur">
+  <input type="email" name="email"><input type="text" name="date_envoi"><textarea name="fiche"></textarea>
+  <input type="text" name="bot-field">
+</form>
+
 <main>
   <form class="shell" id="fipr" novalidate autocomplete="on">
     <div class="stepwrap"><nav class="stepper" id="stepper" aria-label="Étapes"></nav></div>
@@ -543,20 +551,20 @@ main{position:relative;z-index:2}
 
 <script>
 /* =====================================================================
-   CONFIGURATION DE L'ENVOI PAR E-MAIL
-   Les fiches sont envoyées à MAIL_TO via le service gratuit FormSubmit.co.
-   • 1re utilisation : FormSubmit envoie un e-mail « Activate Form » à
-     agv@groupemif.fr ; il faut cliquer UNE fois sur le lien d'activation.
-     Les fiches suivantes arrivent ensuite directement.
-   • Après activation, FormSubmit fournit un identifiant aléatoire : vous
-     pouvez le mettre à la place de l'adresse dans MAIL_TO pour la masquer
-     dans le code de la page.
-   • La page doit être publiée sur un site web (https://…) : ouverte en
-     fichier local, l'envoi est refusé par le service.
+   CONFIGURATION DE L'ENVOI
+   Les fiches sont envoyées via Netlify Forms (formulaire « fiche-renseignements »
+   déclaré plus haut dans la page, juste avant <main>).
+   • Netlify : Project configuration → Forms → activer la détection des
+     formulaires (« Enable form detection »), puis redéployer.
+   • Notification : Forms → Form notifications → Add notification → Email
+     notification → agv@groupemif.fr, formulaire « fiche-renseignements ».
+   • Chaque fiche reste aussi consultable dans l'onglet Forms de Netlify.
+   • L'envoi ne fonctionne que sur le site publié par Netlify.
    ===================================================================== */
 const CONFIG = {
-  MAIL_TO: "agv@groupemif.fr",
-  ENDPOINT: "https://formsubmit.co/ajax/",
+  MAIL_TO: "agv@groupemif.fr",          // utilisé pour le lien de secours (mailto)
+  FORM_NAME: "fiche-renseignements",
+  ENDPOINT: "/",
   STORAGE_KEY: "fipr-brouillon-v1"
 };
 
@@ -1037,8 +1045,6 @@ function buildMail() {
   const clients = [who("i1"), form.i2_nom.disabled ? "" : who("i2")].filter(Boolean).join(" & ") || "Client non nommé";
   const mail = {
     _subject: `Nouvelle fiche de renseignements — ${clients}`,
-    _template: "table",
-    _captcha: "false",
     "Date d'envoi": new Date().toLocaleString("fr-FR", { dateStyle: "full", timeStyle: "short" }),
     "Client(s)": clients,
     "Interlocuteur Mon Intermédiaire Financier": form.interlocuteur_mif.value || "Non précisé"
@@ -1079,11 +1085,20 @@ form.addEventListener("submit", async e => {
   const btn = document.getElementById("submit"), err = document.getElementById("sendError");
   btn.disabled = true; btn.textContent = "Envoi en cours…"; err.hidden = true;
   try {
-    const r = await fetch(CONFIG.ENDPOINT + CONFIG.MAIL_TO, {
-      method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(mail)
+    const fiche = Object.entries(mail).filter(([k]) => !k.startsWith("_")).map(([k, v]) => `${k} : ${v}`).join("\n");
+    const body = new URLSearchParams({
+      "form-name": CONFIG.FORM_NAME,
+      sujet: mail._subject,
+      clients: mail["Client(s)"],
+      interlocuteur: mail["Interlocuteur Mon Intermédiaire Financier"],
+      email: mail._replyto || "",
+      date_envoi: mail["Date d'envoi"],
+      fiche
     });
-    const res = await r.json().catch(() => ({}));
-    if (!r.ok || String(res.success) !== "true") throw new Error(res.message || ("HTTP " + r.status));
+    const r = await fetch(CONFIG.ENDPOINT, {
+      method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: body.toString()
+    });
+    if (!r.ok) throw new Error("HTTP " + r.status);
     try { localStorage.removeItem(CONFIG.STORAGE_KEY); } catch (_) {}
     form.hidden = true; document.getElementById("success").hidden = false;
     scrollTo({ top: 0, behavior: "smooth" });
