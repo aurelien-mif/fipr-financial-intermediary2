@@ -372,6 +372,12 @@ footer.site .fbottom p{max-width:760px}
 
 /* ---------- Envoi par e-mail ---------- */
 .sendto{margin:4px 0 0;padding:12px 16px;border-radius:14px;background:var(--sc-soft);color:var(--brand);font-size:14px}
+.resume{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin:20px 20px 0;padding:16px 18px;border-radius:16px;border:1.5px solid #F3D88A;border-left:5px solid var(--accent);background:#FFF9E8}
+.resume .txt{flex:1 1 260px}
+.resume b{display:block;font:700 16px var(--display);color:var(--ink)}
+.resume span{font-size:14px;color:var(--muted)}
+.resume .row{display:flex;flex-wrap:wrap;gap:10px}
+.resume .btn.danger{border-color:#D9483B;color:#9B231E}
 .send-error{margin-top:14px;padding:18px;border-radius:16px;border:1.5px solid #F2B8B0;border-left:5px solid #D9483B;background:#FFF6F4}
 .send-error b{font:700 16px var(--display);color:#9B231E}
 .send-error p{margin:6px 0 12px;font-size:14px;color:#4A2A27}
@@ -479,6 +485,13 @@ main{position:relative;z-index:2}
 
 <main>
   <form class="shell" id="fipr" novalidate autocomplete="on">
+    <div class="resume" id="resume" hidden role="status">
+      <div class="txt"><b>Vous avez une fiche en cours</b><span id="resumeInfo">Vos réponses précédentes ont été retrouvées sur cet appareil.</span></div>
+      <div class="row">
+        <button type="button" class="btn primary" id="resumeGo">Reprendre où j'en étais →</button>
+        <button type="button" class="btn ghost" id="resumeReset">Recommencer à zéro</button>
+      </div>
+    </div>
     <div class="stepwrap"><nav class="stepper" id="stepper" aria-label="Étapes"></nav></div>
     <div class="progress"><i id="bar"></i></div>
     <div id="panels"></div>
@@ -964,11 +977,11 @@ function validStep(i) {
   if (bad) { p.classList.add("was-validated"); bad.reportValidity(); bad.focus({ preventScroll: false }); return false; }
   return true;
 }
-document.getElementById("next").onclick = () => go(current + 1);
-document.getElementById("prev").onclick = () => go(current - 1);
+document.getElementById("next").onclick = () => { go(current + 1); save(); };
+document.getElementById("prev").onclick = () => { go(current - 1); save(); };
 stepperEl.addEventListener("click", e => {
   const b = e.target.closest("[data-go]"); if (!b) return;
-  go(+b.dataset.go);
+  go(+b.dataset.go); save();
 });
 
 /* ---------------------------- Récapitulatif -------------------------- */
@@ -1010,7 +1023,7 @@ function save() {
   saveT = setTimeout(() => {
     try {
       const lists = {}; Object.keys(LISTS).forEach(t => lists[t] = [...document.getElementById("list_" + t).children].map(c => +c.dataset.n));
-      localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify({ data: snapshot(), lists, step: maxReached }));
+      localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify({ data: snapshot(), lists, step: maxReached, savedAt: Date.now() }));
       document.getElementById("saved").textContent = "✓ Brouillon enregistré";
     } catch (e) { /* stockage indisponible : on ignore */ }
   }, 400);
@@ -1025,13 +1038,14 @@ function fill(data) {
 }
 function restore() {
   try {
-    const raw = localStorage.getItem(CONFIG.STORAGE_KEY); if (!raw) return 0;
-    const { data, lists, step } = JSON.parse(raw);
+    const raw = localStorage.getItem(CONFIG.STORAGE_KEY); if (!raw) return null;
+    const { data, lists, step, savedAt } = JSON.parse(raw);
+    if (!data || !Object.keys(data).length) return null;
     if (data.foyer_seul === "Oui") data.foyer_seul = "Seul(e)"; else if (data.foyer_seul === "Non") data.foyer_seul = "À deux";
     Object.entries(lists || {}).forEach(([t, ns]) => (ns || []).forEach(n => addItem(t, true, n)));
     fill(data); renderEnfants(); fill(data);
-    return Math.min(step || 0, STEPS.length - 2);
-  } catch (e) { return 0; }
+    return { step: Math.min(step || 0, STEPS.length - 2), savedAt };
+  } catch (e) { return null; }
 }
 
 form.addEventListener("input", e => { if (e.target.name === "enfants_nb") renderEnfants(); applyConditions(); save(); });
@@ -1266,9 +1280,31 @@ document.getElementById("pdfPrint").onclick = () => {
 
 document.querySelectorAll(".panda-mini").forEach(i => i.src = document.getElementById("pandaImg").src);
 /* ------------------------------ Init --------------------------------- */
-const startAt = restore();
+const draft = restore();
 applyConditions();
-maxReached = startAt; go(startAt, true);
+if (draft) maxReached = draft.step;   // garde le point d'arrêt même si on recommence à saisir en rubrique 1
+go(0, true);
+if (draft) {
+  // Une fiche en cours a été retrouvée : on ouvre la rubrique 1 et on laisse le choix
+  const banner = document.getElementById("resume"), resetBtn = document.getElementById("resumeReset");
+  const quand = draft.savedAt ? new Date(draft.savedAt).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" }) : "";
+  document.getElementById("resumeInfo").textContent = (quand ? `Dernière modification le ${quand}. ` : "") +
+    `Vous vous étiez arrêté(e) à la rubrique ${draft.step + 1} « ${STEPS[draft.step].t} ».`;
+  banner.hidden = false;
+  document.getElementById("resumeGo").onclick = () => { banner.hidden = true; go(draft.step); };
+  resetBtn.onclick = () => {
+    if (!resetBtn.classList.contains("danger")) {   // 1er clic : demande de confirmation
+      resetBtn.classList.add("danger"); resetBtn.textContent = "Confirmer : effacer mes réponses"; return;
+    }
+    clearTimeout(saveT);
+    try { localStorage.removeItem(CONFIG.STORAGE_KEY); } catch (_) {}
+    location.reload();
+  };
+  // Si la personne continue sans choisir, le bandeau disparaît
+  form.addEventListener("input", () => { banner.hidden = true; }, { once: true });
+  stepperEl.addEventListener("click", () => { banner.hidden = true; }, { once: true });
+  document.getElementById("next").addEventListener("click", () => { banner.hidden = true; }, { once: true });
+}
 </script>
 </body>
 </html>
