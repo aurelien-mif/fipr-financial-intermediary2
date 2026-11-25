@@ -309,7 +309,15 @@ input[readonly]{background:var(--sc-soft);color:var(--sc-dark)}
 .num .gem{position:absolute;inset:0;border-radius:26px;overflow:hidden;
   background:radial-gradient(120% 90% at 20% 0%,rgba(255,255,255,.55),transparent 45%),linear-gradient(150deg,var(--sc-light) 0%,var(--sc) 45%,var(--sc-dark) 100%);
   box-shadow:inset 0 2px 0 rgba(255,255,255,.6),inset 0 -8px 16px rgba(0,0,0,.22),0 18px 34px -14px var(--sc)}
-.panel.t-multi .num .gem{background:radial-gradient(120% 90% at 20% 0%,rgba(255,255,255,.45),transparent 45%),linear-gradient(135deg,#2F6FD6 0 25%,#1F9A6E 25% 50%,#D9483B 50% 75%,#F4B41A 75%)}
+/* Rubrique 7 : médaillon doré, chiffres bleu nuit */
+.panel.t-multi .num .gem{background:
+    radial-gradient(120% 80% at 25% 0%,rgba(255,255,255,.75),transparent 42%),
+    linear-gradient(155deg,#FFF3C4 0%,#F6D77A 18%,#D9A62E 42%,#B98309 62%,#E9C766 82%,#FFF0B8 100%);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.85),inset 0 -1px 0 rgba(120,80,0,.35),inset 0 -10px 18px rgba(140,92,0,.28),0 18px 34px -14px rgba(185,131,9,.75)}
+.panel.t-multi .num::after{background:radial-gradient(closest-side,rgba(244,180,26,.45),transparent)}
+.panel.t-multi .num b{background:linear-gradient(180deg,#1E4E86 0%,#0E2A47 55%,#0A1F36 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 1px 0 rgba(255,246,208,.8))}
+.panel.t-multi .num small{color:#0E2A47;opacity:.8}
 .num .gem::after{content:"";position:absolute;top:-10%;bottom:-10%;left:0;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.85),transparent);animation:shine 3.2s ease-in-out infinite}
 .num b{position:relative;font:800 38px/1 var(--display);letter-spacing:-.04em;
   background:linear-gradient(180deg,#FFFFFF 0%,#FFFFFF 45%,#DCE4EE 55%,#F7F9FC 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
