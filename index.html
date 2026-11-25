@@ -416,6 +416,9 @@ main{position:relative;z-index:2}
   background:linear-gradient(180deg,#62D6A6,#1F9A6E 50%,#126247);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 0 0 3px #fff,0 8px 16px -6px #1F9A6E}
 @media(max-width:480px){.thanks .bubble{left:auto;right:100px;top:-6px}}
 /* ---------- Aperçu PDF ---------- */
+.final-card{margin-top:8px;padding:36px 28px;border-radius:20px;border:1.5px solid var(--line);background:linear-gradient(180deg,#fff,var(--brand-soft));text-align:center}
+.final-card p{max-width:560px;margin:0 auto 24px;font:700 clamp(18px,2.4vw,22px)/1.4 var(--display);color:var(--brand);letter-spacing:-.01em}
+.final-card .btn.big{font-size:17px;padding:16px 28px}
 .pdf-card{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .pdf-card p{margin:4px 0 0;color:var(--muted);font-size:14px}
 .pdf-card b{font:700 16px var(--display);color:var(--brand)}
@@ -475,14 +478,6 @@ main{position:relative;z-index:2}
   </div>
 </section>
 
-<!-- Formulaire déclaré pour Netlify Forms (détecté au déploiement, jamais affiché).
-     Les noms de champs doivent correspondre à ceux envoyés par le script. -->
-<form name="fiche-renseignements" data-netlify="true" netlify-honeypot="bot-field" hidden>
-  <input type="text" name="sujet"><input type="text" name="clients"><input type="text" name="interlocuteur">
-  <input type="email" name="email"><input type="text" name="date_envoi"><textarea name="fiche"></textarea>
-  <input type="text" name="bot-field">
-</form>
-
 <main>
   <form class="shell" id="fipr" novalidate autocomplete="on">
     <div class="resume" id="resume" hidden role="status">
@@ -499,20 +494,11 @@ main{position:relative;z-index:2}
       <button type="button" class="btn ghost" id="prev">← Précédent</button>
       <span class="saved" id="saved"></span>
       <div class="right">
-        <button type="button" class="btn pdf" id="pdfBtn" data-pdf hidden>Aperçu PDF</button>
         <button type="button" class="btn primary" id="next">Continuer →</button>
-        <button type="submit" class="btn primary" id="submit" hidden>✉ Envoyer ma fiche</button>
       </div>
     </div>
   </form>
 
-  <div class="shell success" id="success" hidden>
-    <div class="thanks"><div class="bubble">Merci&nbsp;! À très vite&nbsp;👋</div><img class="panda-mini" alt="" width="318" height="616"><span class="okbadge"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></div>
-    <h2>Merci, votre fiche a bien été envoyée</h2>
-    <p>Elle a été transmise par e-mail à <b>agv@groupemif.fr</b>. Votre conseiller Mon Intermédiaire Financier reviendra vers vous rapidement pour échanger sur votre projet.<br>Une question ? <a href="tel:+33181516662">01 81 51 66 62</a> · <a href="tel:+33651199295">06 51 19 92 95</a> · <a href="mailto:agv@groupemif.fr">agv@groupemif.fr</a><br><small>Du lundi au samedi, de 9h00 à 21h00</small></p>
-    <button type="button" class="btn pdf" data-pdf>Télécharger la fiche en PDF</button>
-    <button type="button" class="btn ghost" id="dl">Copie des données (JSON)</button>
-  </div>
 </main>
 
 <div class="pdf-modal" id="pdfModal" hidden role="dialog" aria-modal="true" aria-labelledby="pdfTitle">
@@ -563,23 +549,7 @@ main{position:relative;z-index:2}
 </footer>
 
 <script>
-/* =====================================================================
-   CONFIGURATION DE L'ENVOI
-   Les fiches sont envoyées via Netlify Forms (formulaire « fiche-renseignements »
-   déclaré plus haut dans la page, juste avant <main>).
-   • Netlify : Project configuration → Forms → activer la détection des
-     formulaires (« Enable form detection »), puis redéployer.
-   • Notification : Forms → Form notifications → Add notification → Email
-     notification → agv@groupemif.fr, formulaire « fiche-renseignements ».
-   • Chaque fiche reste aussi consultable dans l'onglet Forms de Netlify.
-   • L'envoi ne fonctionne que sur le site publié par Netlify.
-   ===================================================================== */
-const CONFIG = {
-  MAIL_TO: "agv@groupemif.fr",          // utilisé pour le lien de secours (mailto)
-  FORM_NAME: "fiche-renseignements",
-  ENDPOINT: "/",
-  STORAGE_KEY: "fipr-brouillon-v1"
-};
+const CONFIG = { STORAGE_KEY: "fipr-brouillon-v1" };
 
 /* ------------------------- Listes de valeurs ------------------------- */
 const L = {
@@ -803,24 +773,10 @@ const STEPS = [
     <button type="button" class="btn-add" data-add="rapport">＋ Ajouter un bien locatif</button></div>
 `},
 { id: "envoi", t: "Envoi", html: `
-  <h2 data-eyebrow="Rubrique 7 · Envoi">Vérification et envoi</h2><p class="lead">Relisez vos réponses avant de transmettre votre fiche.</p>
-  <div class="block pdf-card"><div><b>Votre fiche au format PDF</b><p>Visualisez la fiche mise en page (A4), puis enregistrez-la ou imprimez-la.</p></div>
-    <button type="button" class="btn pdf" data-pdf>Aperçu PDF</button></div>
-  <div class="recap" id="recap"></div>
-  <div class="block conseiller" style="margin-top:18px"><h3>Votre interlocuteur</h3>${g(
-    input("Quel est le nom de votre interlocuteur Mon Intermédiaire Financier ?", "interlocuteur_mif", { c: "c6", ph: "Prénom et nom de votre conseiller", attrs: 'autocomplete="off"' }))}</div>
-  <div class="block" style="margin-top:18px">
-    <label class="check"><input type="checkbox" name="consentement" required data-label="Consentement">
-      <span>J'accepte que les informations saisies soient utilisées par le Groupe Mon Intermédiaire Financier pour étudier ma situation et me recontacter. Elles sont traitées de manière confidentielle et je peux exercer à tout moment mes droits d'accès, de rectification et d'effacement en écrivant à agv@groupemif.fr. <i class="req" style="color:var(--accent);font-style:normal">*</i></span></label>
-    <label class="check" style="margin-top:12px"><input type="checkbox" name="certification" required data-label="Certification">
-      <span>Je certifie l'exactitude des informations communiquées. <i class="req" style="color:var(--accent);font-style:normal">*</i></span></label>
-  </div>
-  <p class="sendto">✉ En cliquant sur « Envoyer ma fiche », vos réponses sont transmises par e-mail à votre conseiller : <b>agv@groupemif.fr</b></p>
-  <div class="send-error" id="sendError" hidden role="alert">
-    <b>L'envoi automatique n'a pas abouti.</b>
-    <p>Vos réponses sont conservées. Vous pouvez réessayer, ou transmettre la fiche par votre messagerie : téléchargez le PDF puis joignez-le à l'e-mail.</p>
-    <div class="row"><button type="button" class="btn pdf" data-pdf>1. Télécharger le PDF</button><a class="btn ghost" id="mailtoLink" href="mailto:agv@groupemif.fr">2. Écrire à agv@groupemif.fr</a></div>
-    <small>Ou par téléphone : 01 81 51 66 62 · 06 51 19 92 95 (du lundi au samedi, 9h – 21h)</small>
+  <h2 data-eyebrow="Rubrique 7 · Envoi">Votre fiche en PDF</h2>
+  <div class="final-card">
+    <p>Générez votre formulaire en PDF et envoyez-le par mail à votre interlocuteur Mon Intermédiaire Financier.</p>
+    <button type="button" class="btn pdf big" data-pdf>Générer mon formulaire en PDF</button>
   </div>
 `}
 ];
@@ -966,8 +922,7 @@ function go(i, noScroll) {
   const pct = Math.max(4, i / (STEPS.length - 1) * 100); const bar = document.getElementById("bar"); bar.style.width = pct + "%"; bar.style.setProperty("--pw", (10000 / pct) + "%");
   document.getElementById("prev").style.visibility = i ? "visible" : "hidden";
   const last = i === STEPS.length - 1;
-  document.getElementById("next").hidden = last; document.getElementById("submit").hidden = !last; document.getElementById("pdfBtn").hidden = !last;
-  if (last) buildRecap();
+  document.getElementById("next").hidden = last;
   stepperEl.children[i].scrollIntoView({ block: "nearest", inline: "center" });
   if (!noScroll) window.scrollTo({ top: form.getBoundingClientRect().top + scrollY - 16, behavior: "smooth" });
 }
@@ -995,17 +950,6 @@ function fmt(el) {
   else if (suf) v += " " + suf;
   return v;
 }
-function buildRecap() {
-  document.getElementById("recap").innerHTML = STEPS.slice(0, -1).map((s, i) => {
-    const rows = [...panels[i].querySelectorAll("[name]")]
-      .filter(el => !el.disabled && !(el.type === "radio" && !el.checked) && !(el.type === "checkbox" && !el.checked))
-      .map(el => [el.dataset.label || el.name, fmt(el)]).filter(r => r[1]);
-    return `<section class="${THEMES[i]}"><h4><span><span class="rn">${String(i + 1).padStart(2, "0")}</span>${s.t}</span><button type="button" data-go="${i}">Modifier</button></h4>` +
-      (rows.length ? `<dl>${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` : `<p class="none">Aucune information renseignée.</p>`) + `</section>`;
-  }).join("");
-}
-document.getElementById("recap").addEventListener("click", e => { const b = e.target.closest("[data-go]"); if (b) go(+b.dataset.go); });
-
 /* --------------------- Sauvegarde automatique ------------------------ */
 let saveT;
 function snapshot() {
@@ -1052,83 +996,8 @@ form.addEventListener("input", e => { if (e.target.name === "enfants_nb") render
 form.addEventListener("change", () => { applyConditions(); save(); });
 
 /* ------------------------------ Envoi -------------------------------- */
-let lastPayload = null;
-// Contenu de l'e-mail : une ligne par réponse, regroupées par rubrique
-function buildMail() {
-  const who = p => [form[p + "_prenom"].value, form[p + "_nom"].value].filter(Boolean).join(" ");
-  const clients = [who("i1"), form.i2_nom.disabled ? "" : who("i2")].filter(Boolean).join(" & ") || "Client non nommé";
-  const mail = {
-    _subject: `Nouvelle fiche de renseignements — ${clients}`,
-    "Date d'envoi": new Date().toLocaleString("fr-FR", { dateStyle: "full", timeStyle: "short" }),
-    "Client(s)": clients,
-    "Interlocuteur Mon Intermédiaire Financier": form.interlocuteur_mif.value || "Non précisé"
-  };
-  if (form.interlocuteur_mif.value) mail._subject += ` (interlocuteur : ${form.interlocuteur_mif.value})`;
-  const email = form.i1_email_perso.value || form.i2_email_perso.value;
-  if (email) mail._replyto = email;               // « Répondre » écrit directement au client
-  collectSections().forEach((sec, i) => {
-    const n = String(i + 1).padStart(2, "0");
-    if (!sec.rows.length) { mail[`${n} ${sec.title}`] = "Non renseigné"; return; }
-    sec.rows.forEach(([k, v]) => {
-      let key = `${n} ${sec.title} · ${k}`, j = 2;
-      while (key in mail) key = `${n} ${sec.title} · ${k} (${j++})`;
-      mail[key] = v;
-    });
-  });
-  mail["Consentement RGPD"] = form.consentement.checked ? "Oui" : "Non";
-  mail["Certification de l'exactitude"] = form.certification.checked ? "Oui" : "Non";
-  return mail;
-}
-function mailtoFallback(mail) {
-  const lines = Object.entries(mail).filter(([k]) => !k.startsWith("_")).map(([k, v]) => `${k} : ${v}`);
-  let body = lines.join("\n");
-  if (body.length > 1800) body = body.slice(0, 1800) + "\n[…] — fiche complète en PDF jointe.";
-  return `mailto:${CONFIG.MAIL_TO}?subject=${encodeURIComponent(mail._subject)}&body=${encodeURIComponent(body)}`;
-}
-form.addEventListener("submit", async e => {
-  e.preventDefault();
-  if (!validStep(STEPS.length - 1)) return;  // seules les cases de consentement sont requises
-  const fields = {};
-  [...form.elements].forEach(el => {
-    if (!el.name || el.disabled) return;
-    if ((el.type === "radio" || el.type === "checkbox") && !el.checked) return;
-    if (el.value !== "") fields[el.name] = el.value;
-  });
-  const mail = buildMail();
-  lastPayload = { date_envoi: new Date().toISOString(), champs: fields, email: mail };
-  const btn = document.getElementById("submit"), err = document.getElementById("sendError");
-  btn.disabled = true; btn.textContent = "Envoi en cours…"; err.hidden = true;
-  try {
-    const fiche = Object.entries(mail).filter(([k]) => !k.startsWith("_")).map(([k, v]) => `${k} : ${v}`).join("\n");
-    const body = new URLSearchParams({
-      "form-name": CONFIG.FORM_NAME,
-      sujet: mail._subject,
-      clients: mail["Client(s)"],
-      interlocuteur: mail["Interlocuteur Mon Intermédiaire Financier"],
-      email: mail._replyto || "",
-      date_envoi: mail["Date d'envoi"],
-      fiche
-    });
-    const r = await fetch(CONFIG.ENDPOINT, {
-      method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: body.toString()
-    });
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    try { localStorage.removeItem(CONFIG.STORAGE_KEY); } catch (_) {}
-    form.hidden = true; document.getElementById("success").hidden = false;
-    scrollTo({ top: 0, behavior: "smooth" });
-  } catch (ex) {
-    console.warn("Envoi impossible :", ex);
-    document.getElementById("mailtoLink").href = mailtoFallback(mail);
-    err.hidden = false; err.scrollIntoView({ behavior: "smooth", block: "center" });
-    btn.disabled = false; btn.textContent = "Réessayer l'envoi";
-  }
-});
-document.getElementById("dl").onclick = () => {
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(lastPayload, null, 2)], { type: "application/json" }));
-  a.download = "fiche-renseignements.json"; a.click();
-};
-
+// Pas d'envoi en ligne : le client génère le PDF et l'envoie lui-même par e-mail.
+form.addEventListener("submit", e => e.preventDefault());
 
 /* ------------------------- Aperçu / export PDF ------------------------ */
 const THEME_HEX = { "t-bleu": ["#2F6FD6", "#174A97", "#EAF2FD"], "t-vert": ["#1F9A6E", "#126247", "#E5F6EE"],
@@ -1166,7 +1035,6 @@ function buildPdfHtml() {
       : `<p class="none">Non renseigné</p>`;
     return `<section style="--c:${c};--d:${dark};--s:${soft}"><h3><span>${String(i + 1).padStart(2, "0")}</span>${esc(sec.title)}</h3>${body}</section>`;
   }).join("");
-  const consent = form.consentement.checked ? "Oui" : "Non", certif = form.certification.checked ? "Oui" : "Non";
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>${esc(pdfFileName())}</title>
 <style>
 @page{size:A4;margin:14mm 13mm 16mm}
@@ -1210,12 +1078,11 @@ td{font-weight:600}
 .cgrid b{color:#0E2A47;font-family:Manrope,Inter,Arial,sans-serif}
 </style></head><body><div class="sheet">
 <header><div class="brand">${logo ? `<img src="${logo}" alt="">` : ""}<div><b>Mon Intermédiaire Financier.</b><small>Les experts du Financement et du Patrimoine</small></div></div>
-<div class="meta">Fiche établie le <b>${today}</b><br>Client(s) : <b>${esc(clients)}</b>${form.interlocuteur_mif.value ? `<br>Interlocuteur MIF : <b>${esc(form.interlocuteur_mif.value)}</b>` : ""}<br>01 81 51 66 62 · 06 51 19 92 95<br>agv@groupemif.fr</div></header>
+<div class="meta">Fiche établie le <b>${today}</b><br>Client(s) : <b>${esc(clients)}</b><br>01 81 51 66 62 · 06 51 19 92 95<br>agv@groupemif.fr</div></header>
 <div class="stripe"></div>
 <div class="title"><h1>Fiche individuelle et personnelle de <em>renseignements</em></h1><p>Mieux vous connaître, pour mieux vous conseiller.</p></div>
 ${sections}
-<div class="legal">Consentement au traitement des données : <b>${consent}</b> · Certification de l'exactitude des informations : <b>${certif}</b><br>
-Les informations recueillies sont traitées de manière strictement confidentielle, conformément à la loi n° 78-17 du 6 janvier 1978 « Informatique et Libertés » et au RGPD. Vous pouvez exercer à tout moment vos droits d'accès, de rectification et d'effacement en écrivant à agv@groupemif.fr.</div>
+<div class="legal">Les informations recueillies sont traitées de manière strictement confidentielle, conformément à la loi n° 78-17 du 6 janvier 1978 « Informatique et Libertés » et au RGPD. Vous pouvez exercer à tout moment vos droits d'accès, de rectification et d'effacement en écrivant à agv@groupemif.fr.</div>
 <div class="sign"><div>Fait le ………………… à …………………<br>Signature ${couple ? "de l'interlocuteur n°1" : "du client"}</div>${couple ? `<div>Fait le ………………… à …………………<br>Signature de l'interlocuteur n°2</div>` : ""}</div>
 <div class="company"><div class="stripe"></div>
 <div class="cgrid"><div><b>MON INTERMÉDIAIRE FINANCIER</b><br>SIREN 845 012 616<br>ORIAS 19000594 (COBSP, COA, MIOBSP)<br>CPI 75012019 000 040 253</div>
